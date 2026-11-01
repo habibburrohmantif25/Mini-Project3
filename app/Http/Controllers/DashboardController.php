@@ -9,9 +9,6 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the main application dashboard.
-     */
     public function index(Request $request): View
     {
         $user = $request->user();

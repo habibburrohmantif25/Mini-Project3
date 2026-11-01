@@ -14,9 +14,6 @@ use Illuminate\View\View;
 
 class IncidentReportController extends Controller
 {
-    /**
-     * Display a listing of incident reports.
-     */
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -48,9 +45,6 @@ class IncidentReportController extends Controller
         return view('reports.index', compact('reports', 'schools'));
     }
 
-    /**
-     * Show the form for creating a new incident report.
-     */
     public function create(): View
     {
         Gate::authorize('create', IncidentReport::class);
@@ -60,9 +54,6 @@ class IncidentReportController extends Controller
         return view('reports.create', compact('schools'));
     }
 
-    /**
-     * Store a newly created incident report in storage.
-     */
     public function store(Request $request): RedirectResponse
     {
         Gate::authorize('create', IncidentReport::class);
@@ -76,7 +67,6 @@ class IncidentReportController extends Controller
             'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
-        // Business Rule BR-03: School and distribution relationship integrity
         $isValidDistribution = MealDistribution::where('id', $validated['meal_distribution_id'])
             ->where('school_id', $validated['school_id'])
             ->exists();
@@ -117,9 +107,6 @@ class IncidentReportController extends Controller
         );
     }
 
-    /**
-     * Display the specified incident report.
-     */
     public function show(IncidentReport $report): View
     {
         Gate::authorize('view', $report);
@@ -129,9 +116,6 @@ class IncidentReportController extends Controller
         return view('reports.show', compact('report'));
     }
 
-    /**
-     * Show the form for editing the specified incident report.
-     */
     public function edit(IncidentReport $report): View
     {
         Gate::authorize('update', $report);
@@ -141,12 +125,8 @@ class IncidentReportController extends Controller
         return view('reports.edit', compact('report', 'schools'));
     }
 
-    /**
-     * Update the specified incident report in storage.
-     */
     public function update(Request $request, IncidentReport $report): RedirectResponse
     {
-        // Enforces BR-01: Throws 403 Forbidden if user is not owner OR status is not draft
         Gate::authorize('update', $report);
 
         $validated = $request->validate([
@@ -158,7 +138,6 @@ class IncidentReportController extends Controller
             'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
-        // Business Rule BR-03
         $isValidDistribution = MealDistribution::where('id', $validated['meal_distribution_id'])
             ->where('school_id', $validated['school_id'])
             ->exists();
@@ -202,5 +181,49 @@ class IncidentReportController extends Controller
         }
 
         return redirect()->route('reports.show', $report)->with('success', 'Laporan kejadian berhasil diperbarui.');
+    }
+
+    public function updateStatus(Request $request, IncidentReport $report): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:draft,reviewed,escalated,resolved'],
+            'community_notes' => ['nullable', 'string'],
+            'escalation_notes' => ['nullable', 'string'],
+        ]);
+
+        $currentStatus = $report->status;
+        $targetStatus = $validated['status'];
+
+        if ($currentStatus === 'draft' && $targetStatus === 'reviewed') {
+            if (! $user->isCommunityStaff()) {
+                abort(403, 'Hanya Pemantau atau Koordinator yang dapat meninjau laporan.');
+            }
+        } elseif ($currentStatus === 'reviewed' && $targetStatus === 'escalated') {
+            if (! $user->isCommunityStaff()) {
+                abort(403, 'Hanya Pemantau atau Koordinator yang dapat meneruskan laporan.');
+            }
+        } elseif ($currentStatus === 'escalated' && $targetStatus === 'resolved') {
+            if (! $user->isKoordinator()) {
+                abort(403, 'Hanya Koordinator Komunitas yang dapat menyelesaikan laporan.');
+            }
+        } else {
+            abort(422, 'Transisi status tidak sah menurut alur penanganan laporan (BR-02).');
+        }
+
+        $updateData = ['status' => $targetStatus];
+
+        if ($request->filled('community_notes')) {
+            $updateData['community_notes'] = $validated['community_notes'];
+        }
+
+        if ($request->filled('escalation_notes')) {
+            $updateData['escalation_notes'] = $validated['escalation_notes'];
+        }
+
+        $report->update($updateData);
+
+        return redirect()->route('reports.show', $report)->with('success', 'Status laporan berhasil diubah menjadi ' . ucfirst($targetStatus) . '.');
     }
 }

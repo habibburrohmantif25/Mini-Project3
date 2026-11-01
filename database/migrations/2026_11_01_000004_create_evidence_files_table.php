@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('evidence_files', function (Blueprint $table) {
@@ -17,14 +14,11 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('original_filename');
             $table->string('mime_type', 100);
-            $table->unsignedInteger('file_size'); // Size in bytes
+            $table->unsignedInteger('file_size');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('evidence_files');

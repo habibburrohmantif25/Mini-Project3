@@ -11,9 +11,6 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    /**
-     * Show the login form.
-     */
     public function showLoginForm(): View|RedirectResponse
     {
         if (Auth::check()) {
@@ -23,9 +20,6 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * Handle an authentication attempt.
-     */
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
@@ -44,9 +38,6 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    /**
-     * Show the registration form.
-     */
     public function showRegisterForm(): View|RedirectResponse
     {
         if (Auth::check()) {
@@ -56,9 +47,6 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    /**
-     * Handle user registration.
-     */
     public function register(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -80,9 +68,6 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->with('success', 'Akun berhasil didaftarkan sebagai Pelapor.');
     }
 
-    /**
-     * Log the user out of the application.
-     */
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();

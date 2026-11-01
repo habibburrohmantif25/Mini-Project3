@@ -30,16 +30,7 @@
         <div class="form-group">
             <label for="meal_distribution_id">Pilih Distribusi Makanan Terkait <span style="color:red;">*</span></label>
             <select id="meal_distribution_id" name="meal_distribution_id" required>
-                <option value="">-- Pilih Distribusi Makanan --</option>
-                @foreach($schools as $school)
-                    <optgroup label="{{ $school->name }}" class="school-optgroup-{{ $school->id }}">
-                        @foreach($school->mealDistributions as $dist)
-                            <option value="{{ $dist->id }}" data-school-id="{{ $school->id }}" {{ old('meal_distribution_id') == $dist->id ? 'selected' : '' }}>
-                                {{ $dist->distribution_date->format('d/m/Y') }} - {{ $dist->menu_description }}
-                            </option>
-                        @endforeach
-                    </optgroup>
-                @endforeach
+                <option value="">-- Pilih Sekolah Terlebih Dahulu --</option>
             </select>
             @error('meal_distribution_id')
                 <div class="text-danger">{{ $message }}</div>
@@ -88,4 +79,66 @@
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const schoolSelect = document.getElementById('school_id');
+        const distributionSelect = document.getElementById('meal_distribution_id');
+        const selectedDistributionId = "{{ old('meal_distribution_id', '') }}";
+
+        function loadDistributions(schoolId, preselectedId = '') {
+            if (!schoolId) {
+                distributionSelect.innerHTML = '<option value="">-- Pilih Sekolah Terlebih Dahulu --</option>';
+                distributionSelect.disabled = true;
+                return;
+            }
+
+            distributionSelect.disabled = true;
+            distributionSelect.innerHTML = '<option value="">Memuat daftar distribusi makanan...</option>';
+
+            fetch('/api/schools/' + schoolId + '/distributions')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Gagal mengambil data distribusi makanan');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length === 0) {
+                        distributionSelect.innerHTML = '<option value="">-- Belum ada distribusi makanan untuk sekolah ini --</option>';
+                        distributionSelect.disabled = false;
+                        return;
+                    }
+
+                    let optionsHtml = '<option value="">-- Pilih Distribusi Makanan --</option>';
+                    data.forEach(dist => {
+                        const isSelected = String(dist.id) === String(preselectedId) ? 'selected' : '';
+                        const batchInfo = dist.batch_code ? ' (' + dist.batch_code + ')' : '';
+                        optionsHtml += `<option value="${dist.id}" ${isSelected}>${dist.formatted_date} - ${dist.menu_description}${batchInfo}</option>`;
+                    });
+
+                    distributionSelect.innerHTML = optionsHtml;
+                    distributionSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching distributions:', error);
+                    distributionSelect.innerHTML = '<option value="">Gagal memuat data distribusi makanan</option>';
+                    distributionSelect.disabled = false;
+                });
+        }
+
+        schoolSelect.addEventListener('change', function() {
+            loadDistributions(this.value);
+        });
+
+        // Trigger on load if school is selected
+        if (schoolSelect.value) {
+            loadDistributions(schoolSelect.value, selectedDistributionId);
+        } else {
+            distributionSelect.disabled = true;
+        }
+    });
+</script>
+@endpush
 @endsection

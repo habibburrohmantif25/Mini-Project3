@@ -101,6 +101,70 @@
     </table>
 </div>
 
+<!-- Panel Tindakan Perubahan Status (BR-02) -->
+@if(auth()->user()->isCommunityStaff())
+    <div class="card" style="background: #fafafa; border: 1px solid #b8daff;">
+        <h3>Tindakan Penanganan Laporan (BR-02)</h3>
+
+        @if($report->status === 'draft')
+            <p style="font-size: 14px; color: #555;">
+                Laporan ini berstatus <strong>Draft</strong>. Anda dapat meninjau kelengkapan laporan dan mengubah status menjadi <strong>Reviewed</strong>.
+            </p>
+            <form method="POST" action="{{ route('reports.update-status', $report) }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="status" value="reviewed">
+                <div class="form-group">
+                    <label for="community_notes">Catatan Hasil Peninjauan</label>
+                    <textarea name="community_notes" rows="2" placeholder="Tuliskan catatan verifikasi kelengkapan atau temuan kejadian serupa...">{{ old('community_notes', $report->community_notes) }}</textarea>
+                </div>
+                <button type="submit" class="btn">Tandai Sudah Ditinjau (Reviewed)</button>
+            </form>
+
+        @elseif($report->status === 'reviewed')
+            <p style="font-size: 14px; color: #555;">
+                Laporan telah ditinjau. Jika memerlukan investigasi pihak eksternal, Anda dapat mengubah status menjadi <strong>Escalated</strong>.
+            </p>
+            <form method="POST" action="{{ route('reports.update-status', $report) }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="status" value="escalated">
+                <div class="form-group">
+                    <label for="escalation_notes">Catatan Penerusan Informasi</label>
+                    <textarea name="escalation_notes" rows="2" placeholder="Tuliskan alasan eskalasi atau pihak eksternal yang dihubungi...">{{ old('escalation_notes', $report->escalation_notes) }}</textarea>
+                </div>
+                <button type="submit" class="btn">Tandai Diteruskan (Escalate)</button>
+            </form>
+
+        @elseif($report->status === 'escalated')
+            @if(auth()->user()->isKoordinator())
+                <p style="font-size: 14px; color: #555;">
+                    Laporan sedang dalam tahap eskalasi. Sebagai Koordinator, Anda dapat mencatat konfirmasi hasil penanganan dan mengubah status menjadi <strong>Resolved</strong>.
+                </p>
+                <form method="POST" action="{{ route('reports.update-status', $report) }}">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="resolved">
+                    <div class="form-group">
+                        <label for="escalation_notes">Catatan Hasil Penanganan / Konfirmasi Faskes & Sekolah</label>
+                        <textarea name="escalation_notes" rows="2" required placeholder="Tuliskan konfirmasi penanganan resmi dari pihak terkait...">{{ old('escalation_notes', $report->escalation_notes) }}</textarea>
+                    </div>
+                    <button type="submit" class="btn">Selesaikan Laporan (Resolve)</button>
+                </form>
+            @else
+                <p style="font-size: 14px; color: #555;">
+                    Laporan ini berstatus <strong>Escalated</strong> dan sedang menunggu pencatatan hasil tindak lanjut oleh Koordinator Komunitas.
+                </p>
+            @endif
+
+        @else
+            <p style="font-size: 14px; color: #28a745; margin: 0;">
+                ✓ Laporan telah diselesaikan (Resolved). Alur penanganan selesai.
+            </p>
+        @endif
+    </div>
+@endif
+
 <!-- Log Riwayat Status (Audit Observer) -->
 <div class="card">
     <h3>Riwayat Perubahan Status (Audit Log)</h3>

@@ -13,12 +13,8 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // 1. Akun Demo Pre-configured (SRS 8.1)
         $pelapor = User::query()->firstOrCreate(
             ['email' => 'pelapor@mbg.test'],
             [
@@ -46,7 +42,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Data Master Sekolah (SRS 8.2)
         $smpHarapan = School::query()->firstOrCreate(
             ['name' => 'SMP Harapan'],
             [
@@ -65,7 +60,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Data Distribusi Makanan (SRS 8.2)
         $distSmp1 = MealDistribution::query()->firstOrCreate(
             [
                 'school_id' => $smpHarapan->id,
@@ -99,9 +93,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 4. Sample Incident Reports (SRS 8.2)
-
-        // Sample 1: Report Status 'draft' (Milik pelapor@mbg.test, SMP Harapan)
         $reportDraft = IncidentReport::query()->firstOrCreate(
             ['report_code' => 'REP-20261030-001'],
             [
@@ -117,7 +108,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Sample 2: Report Status 'reviewed' (Sudah ada catatan Pemantau Komunitas)
         $reportReviewed = IncidentReport::query()->firstOrCreate(
             ['report_code' => 'REP-20261028-001'],
             [
@@ -147,7 +137,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Sample 3: Report Status 'escalated' (Sudah ditandai untuk diteruskan ke pihak eksternal)
         $reportEscalated = IncidentReport::query()->firstOrCreate(
             ['report_code' => 'REP-20261028-002'],
             [
@@ -197,11 +186,10 @@ class DatabaseSeeder extends Seeder
                 'file_path' => 'evidences/sample_ayam_goreng.jpg',
                 'original_filename' => 'foto_ayam_goreng_curiga_basi.jpg',
                 'mime_type' => 'image/jpeg',
-                'file_size' => 245760, // ~240 KB
+                'file_size' => 245760,
             ]
         );
 
-        // Sample 4: Report Status 'resolved' (Sudah selesai ditindaklanjuti oleh Koordinator)
         $reportResolved = IncidentReport::query()->firstOrCreate(
             ['report_code' => 'REP-20261029-001'],
             [
