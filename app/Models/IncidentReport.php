@@ -57,4 +57,16 @@ class IncidentReport extends Model
     {
         return $this->hasMany(ReportObserverLog::class);
     }
+
+    public static function generateReportCode(): string
+    {
+        $prefix = 'REP-' . now()->format('Ymd') . '-';
+        $latest = self::where('report_code', 'like', $prefix . '%')->latest('id')->first();
+        $sequence = 1;
+        if ($latest && preg_match('/-(\d+)$/', $latest->report_code, $matches)) {
+            $sequence = (int) $matches[1] + 1;
+        }
+
+        return $prefix . str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+    }
 }
