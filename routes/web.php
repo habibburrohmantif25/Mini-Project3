@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\SchoolDistributionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentReportController;
+use App\Http\Controllers\RekapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,7 +39,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:pemantau,koordinator')
         ->name('reports.update-status');
 
-    Route::get('/rekap', function () {
-        return 'Halaman Rekap Sederhana (Pemantau & Koordinator Only)';
-    })->middleware('role:pemantau,koordinator')->name('rekap.index');
+    Route::get('/rekap', [RekapController::class, 'index'])
+        ->middleware('role:pemantau,koordinator')
+        ->name('rekap.index');
 });
